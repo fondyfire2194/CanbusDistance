@@ -51,7 +51,7 @@ public class Ultrasound {
     return getVolts() / voltsPerMM;
   }
 
-  public double getDistanceMetes() {
+  public double getDistanceMeters() {
     return getDistanceMM() / 1000;
   }
 
@@ -65,7 +65,7 @@ public class Ultrasound {
 
   public void updateStatus() {
     SD.putN0("Usnd MM ", getDistanceMM());
-    SD.putN1("Usnd Meters ", getDistanceMetes());
+    SD.putN1("Usnd Meters ", getDistanceMeters());
     SD.putN0("Usnd Inches ", getDistanceInches());
     SD.putN1("Usnd Feet ", getDistanceFeet());
   }

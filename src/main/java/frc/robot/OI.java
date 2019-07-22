@@ -7,6 +7,10 @@
 
 package frc.robot;
 
+import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import frc.robot.commands.*;
+
 /**
  * This class is the glue that binds the controls on the physical operator
  * interface to the commands and command groups that allow control of the robot.
@@ -39,4 +43,20 @@ public class OI {
   // Start the command when the button is released and let it run the command
   // until it is finished as determined by it's isFinished method.
   // button.whenReleased(new ExampleCommand());
+  public OI() {
+    Timer.delay(.25);
+    SmartDashboard.putData("IdentifyDevice0", new IdentifyDevice(0));
+    Timer.delay(.25);
+    SmartDashboard.putData("IdentifyDevice23", new IdentifyDevice(23));
+    Timer.delay(.25);
+    SmartDashboard.putData("ConfigureDevice0", new ConfigureDevice(0));
+    Timer.delay(.25);
+    SmartDashboard.putData("ConfigureDevice23", new ConfigureDevice(23));
+    Timer.delay(.25);
+    SmartDashboard.putData("ShortRange", new ConfigureRange(0));
+    Timer.delay(.25);
+    SmartDashboard.putData("MidRange", new ConfigureRange(1));
+    Timer.delay(.25);
+    SmartDashboard.putData("LongRange", new ConfigureRange(2));
+  }
 }

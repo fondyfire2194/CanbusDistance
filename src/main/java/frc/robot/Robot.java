@@ -8,13 +8,21 @@
 package frc.robot;
 
 import edu.wpi.first.wpilibj.TimedRobot;
+import edu.wpi.first.wpilibj.I2C.Port;
 import edu.wpi.first.wpilibj.DigitalOutput;
 import edu.wpi.first.wpilibj.command.Scheduler;
 import frc.robot.subsystems.RevColorV2;
 import frc.robot.subsystems.TFMini;
+import frc.robot.subsystems.TFMiniI2C;
 import frc.robot.subsystems.Lidar;
+import frc.robot.subsystems.ColorProximitySensor;
 import frc.robot.subsystems.Ultrasound;
 import frc.robot.subsystems.Ultrasound.ultrasoundType;
+import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import frc.robot.subsystems.CanbusDistanceSensor;
+import frc.robot.subsystems.EncoderAQuadB;
+import edu.wpi.first.wpilibj.Servo;
 
 /**
  * The VM is configured to automatically run this class, and to call the
@@ -30,8 +38,18 @@ public class Robot extends TimedRobot {
   public TFMini tfMini;
   public Ultrasound Ultrasound1;
   public Lidar lidar;
+  public TFMiniI2C tfMiniI2C;
+  public static ColorProximitySensor hatchColorSensor, cargoColorSensor;
+  public static CanbusDistanceSensor distanceSensorLoad;
+  public static EncoderAQuadB encoderOne;
+  private double a;
+  private double b;
+  public static int sensorID = 0;
+  private boolean oneShot;
+  private DigitalOutput testI2C;
+  public Servo servoOne;
 
-  /**
+  /*
    * This function is run when the robot is first started up and should be used
    * for any initialization code.
    */
@@ -39,9 +57,17 @@ public class Robot extends TimedRobot {
   public void robotInit() {
     m_oi = new OI();
     // tfMini = new TFMini();
-    // Ultrasound1= new Ultrasound(0, Ultrasound.ultrasoundType.inch, .009766);
+    // tfMiniI2C = new TFMiniI2C(Port.kOnboard);
+    Ultrasound1 = new Ultrasound(0, Ultrasound.ultrasoundType.inch, .009766);
     // revColorSensor=new RevColorV2();
-    lidar = new Lidar(4, 2);
+    // lidar = new Lidar(2,3,4);
+    // distanceSensorLoad = new CanbusDistanceSensor(23);
+    // hatchColorSensor = new ColorProximitySensor(Port.kOnboard);
+    // testI2C = new DigitalOutput(7);
+    // LiveWindow.add(distanceSensorLoad);
+    // encoderOne = new EncoderAQuadB(5,6,false,1);
+    servoOne = new Servo(9);
+    servoOne.set(0);
   }
 
   /**
@@ -73,6 +99,7 @@ public class Robot extends TimedRobot {
   public void disabledPeriodic() {
     Scheduler.getInstance().run();
     updateStatus();
+    SmartDashboard.putNumber("servo", servoOne.get());
   }
 
   /**
@@ -90,7 +117,7 @@ public class Robot extends TimedRobot {
   @Override
   public void autonomousInit() {
 
-    /*
+    /**
      * String autoSelected = SmartDashboard.getString("Auto Selector", "Default");
      * switch(autoSelected) { case "My Auto": autonomousCommand = new
      * MyAutoCommand(); break; case "Default Auto": default: autonomousCommand = new
@@ -116,6 +143,10 @@ public class Robot extends TimedRobot {
     // continue until interrupted by another command, remove
     // this line or comment it out.
 
+    // distanceSensorLoad.readHeartbeat();
+    // boolean test1 = tfMiniI2C.writeToTFMini();
+    // SmartDashboard.putBoolean("WriteOK", test1);
+servoOne.set(1);
   }
 
   /**
@@ -124,6 +155,34 @@ public class Robot extends TimedRobot {
   @Override
   public void teleopPeriodic() {
     Scheduler.getInstance().run();
+    SmartDashboard.putNumber("TTT", Timer.getFPGATimestamp() - a);
+    a = Timer.getFPGATimestamp();
+ 
+    // b++;
+    // if (b >= 10) {
+    // double dist = distanceSensorLoad.getDistanceMM();
+    // SD.putN0("DistMM", dist);
+    // SD.putN2("DistFt", dist / 304.8);
+    // double temp[] = distanceSensorLoad.readQuality();
+    // SD.putN("AmbLight",temp[0]);
+    // SD.putN("StdDev",temp[1]);
+    // double temp1[] = distanceSensorLoad.readCalibrationState();
+    // SD.putN("X",temp1[0]);
+    // SD.putN("Y",temp1[1]);
+    // SD.putN("Offset",temp1[2]);
+    // b = 0;
+    // }
+    b = Timer.getFPGATimestamp();
+    // testI2C.set(true);
+    // if(testI2C.get()){
+    // boolean test1 = tfMiniI2C.writeToTFMini();
+    // SmartDashboard.putBoolean("WriteOK", test1);
+    // Timer.delay(.01);
+    // boolean test2 = tfMiniI2C.readTFMini();
+    // SmartDashboard.putBoolean("ReadOK", test2);
+    // }
+    // testI2C.set(false);
+    // Timer.delay(.01);
   }
 
   /**
@@ -135,8 +194,11 @@ public class Robot extends TimedRobot {
 
   public void updateStatus() {
     // tfMini.updateStatus();
+    // SmartDashboard.putBoolean("OSONE", oneShot);
     // Ultrasound1.updateStatus();
     // revColorSensor.updateStatus();
-    lidar.updateStatus();
+    // lidar.updateStatus();
+    // distanceSensorLoad.updateStatus("Load");
+
   }
 }

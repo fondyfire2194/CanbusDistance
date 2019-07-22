@@ -8,14 +8,18 @@
 package frc.robot.subsystems;
 
 import frc.robot.subsystems.CANSendReceive;
-
+import edu.wpi.first.wpilibj.Sendable;
+import edu.wpi.first.wpilibj.SendableBase;
+import edu.wpi.first.wpilibj.livewindow.LiveWindow;
+import edu.wpi.first.wpilibj.smartdashboard.SendableBuilder;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj.DriverStation;
 
 /**
  * 
  */
 
-public class CanbusDistanceSensor {
+public class CanbusDistanceSensor extends SendableBase implements Sendable {
   // Message IDs
 
   private static final int HEARTBEAT_MESSAGE = 0x18F0FF00;
@@ -25,133 +29,138 @@ public class CanbusDistanceSensor {
   private static final int RANGING_CONFIGURATION_MESSAGE = 0x0CF91300;
   public final int DEVICE_CONFIGURATION_MESSAGE = 0x0CAAFFF9;
   private static final int kSendMessagePeriod = 0;
+  // LiveWindow color update MS maximum interval (milliseconds)
+  protected final static int LIVE_WINDOW_UPDATE_INTERVAL = 50;
+
   private int myId;
   public CANSendReceive canSendReceive;
-
-  public byte[] hwdata = new byte[6];
-
-  public static enum DU {
-    Mm, M, In, Ft
-  };
+  private double lastDistance = 0;
+  public byte[] hwdata = new byte[7];
+  private double serialNumber;
+  private double partNumber;
 
   public CanbusDistanceSensor(int deviceID) {
     myId = deviceID;
     canSendReceive = new CANSendReceive();
+    LiveWindow.add(this);
+    setName("Distance", "Can Dist " + String.valueOf(myId));
+    readHeartbeat();
   }
 
   // Messages from device
   public long readHeartbeat() {
     long read = canSendReceive.readMessage(HEARTBEAT_MESSAGE, myId);
-    int serialNumber1 = 256 * (256 * canSendReceive.result[3] + canSendReceive.result[2]) + canSendReceive.result[1];
-    int partNumber1 = 256 * canSendReceive.result[5] + canSendReceive.result[4];
+    serialNumber = extractValue(canSendReceive.result, 3, 1);
+    partNumber = extractValue(canSendReceive.result, 5, 4);
 
-    hwdata[1] = canSendReceive.result[1];
-    hwdata[2] = canSendReceive.result[2];
-    hwdata[3] = canSendReceive.result[3];
-    hwdata[4] = canSendReceive.result[4];
-    hwdata[5] = canSendReceive.result[5];
-    SmartDashboard.putNumber("SerialNumber1", serialNumber1);
-    SmartDashboard.putNumber("PartNumber1", partNumber1);
+    for (int i = 1; i <= 5; i++) {
+      hwdata[i] = canSendReceive.result[i];
+    }
+    SmartDashboard.putNumber("SNumber", serialNumber);
+    SmartDashboard.putNumber("PNumber", partNumber);
 
     return read;
   }
 
-  public double getDistance(DU du) {
-
+  public double getDistanceMM() {
     long read = canSendReceive.readMessage(MEASURED_DISTANCE_MESSAGE, myId);
-    int rangingStatus = Byte.toUnsignedInt(canSendReceive.result[2]);
+    if (read == -1)
+      return lastDistance;
+    else {
+      int rangingStatus = Byte.toUnsignedInt(canSendReceive.result[2]);
+      if (rangingStatus != 0) {
+        return (double) -rangingStatus;
+      } else {
+        lastDistance = extractValue(canSendReceive.result, 1, 0);
 
-    if (rangingStatus != 0)
-      read = (long)-rangingStatus;
-    if (read != -1 && rangingStatus == 0) {
-      double mm = (double) 256 * canSendReceive.result[1] + canSendReceive.result[0];
-      switch (du) {
-      case Mm:
-        return mm;
-      case M:
-        return mm / 1000;
-      case In:
-        return mm / 25.4;
-      case Ft:
-        return mm / 304.8;
-      default:
-        return -33.;
+        return lastDistance;
       }
     }
   }
 
-  boolean isBitSet(byte test, int index) {
-    int mask = 1 << index;
-    return (test & mask) != 0;
+  public double[] readQuality() {
+    double temp[] = { 0, 0 };
+    long read = canSendReceive.readMessage(MEASUREMENT_QUALITY_MESSAGE, myId);
+    temp[0] = extractValue(canSendReceive.result, 3, 0) / 65536;
+    temp[1] = extractValue(canSendReceive.result, 7, 4) / 65536;
+    return temp;
   }
 
-  // public double readQuality() {
-  // CANData canData = new CANData();
-  // double quality = 999;
-  // if (!canbusDistanceSensor.readPacketNew(MEASUREMENT_QUALITY_MESSAGE,
-  // canData)) {
-  // return quality;
-  // } else {
-  // return quality;
-  // }
-  // }
-
-  // public double readQualityStdDev() {
-  // CANData canData = new CANData();
-  // double stDev = 999;
-  // if (!canbusDistanceSensor.readPacketNew(MEASUREMENT_QUALITY_MESSAGE,
-  // canData)) {
-  // return stDev;
-  // } else {
-  // return stDev;
-  // }
+  // public double[] readCalibrationState() {
+  // double temp[] = { 0, 0, 0 ,0,0,0,0};
+  // long read = canSendReceive.readMessage(CALIBRATION_STATE_MESSAGE, myId);
+  // SmartDashboard.putNumber("Bytes", canSendReceive.result.length);
+  // SmartDashboard.putNumber("read", read);
+  // if (read != -1) {
+  // temp[2] = extractValue(canSendReceive.result, 2, 1);
+  // temp[0] = canSendReceive.result[0] & 0b00001111;
+  // temp[1] = canSendReceive.result[0] >> 4;
   // }
 
-  // public double readCalibrationState() {
-  // CANData canData = new CANData();
-  // double calState = 999;
-  // if (!canbusDistanceSensor.readPacketNew(CALIBRATION_STATE_MESSAGE, canData))
-  // {
-  // return calState;
-  // } else {
-  // return calState;
-  // }
+  // return temp;
+
   // }
 
   // // Messages to device
-  // private void configureRange(int mode) {
-  // byte[] data = null;
-  // switch (mode) {
-  // case 0:// short
-  // data[0] = 0x0;
-  // break;
-  // case 1:// medium
-  // data[0] = 0x01;
-  // break;
-  // case 2:// long
-  // data[0] = 0x02;
-  // break;
-  // default:
-  // data[0] = 0x0;
-  // break;
-  // }
-  // canSend.sendMessage(RANGING_CONFIGURATION_MESSAGE, data, 1,
-  // kSendMessagePeriod);
-  // }
-
-  public void identifyDevice(int apiId) {
-
-    hwdata[0] = 0x0D;
-
-    CANSend.sendMessage(DEVICE_CONFIGURATION_MESSAGE | apiId, hwdata, 6, kSendMessagePeriod);
+  public void configureRange(int mode) {
+    byte[] data = new byte[7];
+    switch (mode) {
+    case 0:// short
+      data[0] = 0x0;
+      break;
+    case 1:// medium
+      data[0] = 0x01;
+      break;
+    case 2:// long
+      data[0] = 0x02;
+      break;
+    default:
+      data[0] = 0x0;
+      break;
+    }
+    canSendReceive.sendMessage(RANGING_CONFIGURATION_MESSAGE | myId, data, 1, kSendMessagePeriod);
   }
 
-  private void configureDevice(int newID) {
+  public void identifyDevice(int apiId) {
+    hwdata[0] = 0x0D;
+    canSendReceive.sendMessage(DEVICE_CONFIGURATION_MESSAGE | apiId, hwdata, 6, kSendMessagePeriod);
+  }
+
+  public void configureDevice(int newID) {
     if (newID > 0 && newID < 33) {
       hwdata[0] = 0x0C;
-      hwdata[7] = (byte) newID;
-      CANSend.sendMessage(DEVICE_CONFIGURATION_MESSAGE, hwdata, 7, kSendMessagePeriod);
+      hwdata[6] = (byte) newID;
+      canSendReceive.sendMessage(DEVICE_CONFIGURATION_MESSAGE | myId, hwdata, 7, kSendMessagePeriod);
     }
+  }
+
+  double extractValue(byte[] src, int high, int low) {
+    double temp = src[high] * 256;
+    int i = 0;
+    for (i = high - 1; i > low; i--) {
+      temp = 256 * (temp + (double) src[i]);
+    }
+    return temp + src[i];
+  }
+
+  // https://www.chiefdelphi.com/t/creating-custom-smartdashboard-types-like-pidcommand/162737/8
+  @Override
+  public void initSendable(SendableBuilder builder) {
+    builder.setSmartDashboardType("ColorProx");
+    // builder.addDoubleProperty("Range Offset", () -> readCalibrationState()[2],
+    // null);
+    // builder.addDoubleProperty("X Position", () -> readCalibrationState()[0],
+    // null);
+    // builder.addDoubleProperty("Y Position", () -> readCalibrationState()[1],
+    // null);
+
+    builder.addDoubleProperty("Serial Number", () -> serialNumber, null);
+    builder.addDoubleProperty("Part Number", () -> (double) partNumber, null);
+    builder.addDoubleProperty("Distance MM", () -> getDistanceMM(), null);
+    builder.addDoubleProperty("Distance Inch", () -> getDistanceMM() / 25.4, null);
+    builder.addDoubleProperty("Ambient Light", () -> readQuality()[0], null);
+    builder.addDoubleProperty("Std Dev", () -> readQuality()[1], null);
+
   }
 
 }

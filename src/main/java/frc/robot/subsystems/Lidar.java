@@ -15,27 +15,28 @@ import frc.robot.SD;
 
 public class Lidar {
   /**
-   * Requires 4.7 k resistor from mode input to ground
+   * Requires 470 ohm resistor from mode counter input to trigger output
    * 
    * 
    */
 
   public static DigitalOutput lidarPowerEnable;
-  
+  public static DigitalOutput lidarTrigger;
   public static Counter pwmWidth;
 
   private double lidarPulseWidth;
 
-  public Lidar(int enPin, int modePin) {
+  public Lidar(int enPin, int triggerPin,int modePin) {
 
     lidarPowerEnable = new DigitalOutput(enPin);// lidar power enable
-    
+    lidarTrigger = new DigitalOutput(triggerPin);// lidar power trigger
+
     pwmWidth = new Counter(modePin); // need time of pwm high in microseconds
-    
+
     pwmWidth.setSemiPeriodMode(true);// set counter for measuring pulse high
-
+     pwmWidth.setSamplesToAverage(100);
     lidarPowerEnable.set(true);// enable lidar
-
+    lidarTrigger.set(false);// trigger lidar
   }
 
   public double readLidarSensor() {
@@ -48,9 +49,9 @@ public class Lidar {
     } // 10 microseconds is 1 cm. Value returned is in seconds so this is mm
 
     else {
-      lidarPowerEnable.set(false);
+      lidarTrigger.set(true);
       Timer.delay(.005);
-      lidarPowerEnable.set(true);
+      lidarTrigger.set(false);
       return 0;
     }
   }
@@ -74,8 +75,8 @@ public class Lidar {
   public void updateStatus() {
     SD.putN0("Lidar MM ", getDistanceMM());
     SD.putN2("Lidar Meters ", getDistanceMetes());
-    SD.putN1("Lidar Inches ", getDistanceInches());
-    SD.putN2("Lidar Feet ", getDistanceFeet());
+    SD.putN0("Lidar Inches ", getDistanceInches());
+    SD.putN1("Lidar Feet ", getDistanceFeet());
     SmartDashboard.putBoolean("En", lidarPowerEnable.get());
   }
 }

@@ -8,7 +8,10 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.SD;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.DriverStation;
-
+import edu.wpi.first.wpilibj.Sendable;
+import edu.wpi.first.wpilibj.SendableBase;
+import edu.wpi.first.wpilibj.livewindow.LiveWindow;
+import edu.wpi.first.wpilibj.smartdashboard.SendableBuilder;
 /**
  * A subsystem for accessing the TFMini "LIDAR".
  * 
@@ -20,7 +23,7 @@ import edu.wpi.first.wpilibj.DriverStation;
  * Original signal quality degree Byte 8 - Checksum = low byte of sum of
  * preceding 8 bytes
  */
-public class TFMini {
+public class TFMini extends SendableBase implements Sendable {
   private SerialPort serialPort;
 
   private final int frameHeaderByte = 0x59;
@@ -36,6 +39,7 @@ public class TFMini {
   int HEADER = 0x59; // frame header of data package
 
   public TFMini() {
+    
     int retry_counter = 0;
     SmartDashboard.putBoolean("SUCCESS", false);
     // Retry strategy to get this serial port open.
@@ -60,6 +64,9 @@ public class TFMini {
 
       return;
     }
+    setName("TFMini","Distance Sensor");
+
+    LiveWindow.add(this);
     // SmartDashboard.putBoolean("SUCCESS3", serialPort != null);
     serialPort.setWriteBufferSize(1);
     serialPort.setReadBufferSize(20);
@@ -76,6 +83,14 @@ public class TFMini {
     packetListenerThread.setDaemon(true);
     packetListenerThread.start();
   }
+  public void initSendable(SendableBuilder builder) {
+    builder.setSmartDashboardType("DistanceSensor");
+    builder.addDoubleProperty("Distance CM", () -> (double)distanceCM, null); 
+    builder.addDoubleProperty("Distance In", () -> (double) distanceCM/2.54, null);
+    builder.addDoubleProperty("SignalStrength", () -> (double)signalStrength, null);
+    builder.addDoubleProperty("Original Quality", () -> (double) originalSignalQualityDegree, null);
+
+}
 
   public void updateStatus() {
     SD.putN0("TFMini Distance Cm", distanceCM);
@@ -121,6 +136,12 @@ public class TFMini {
    * This thread runs a periodic task in the background to listen for serial
    * packets.
    */
-  Thread packetListenerThread=new Thread(new Runnable(){public void run(){while(!Thread.interrupted()){backgroundUpdate();}}});
+  Thread packetListenerThread = new Thread(new Runnable() {
+    public void run() {
+      while (!Thread.interrupted()) {
+        backgroundUpdate();
+      }
+    }
+  });
 
 }
