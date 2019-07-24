@@ -9,6 +9,7 @@ package frc.robot.commands;
 
 import edu.wpi.first.wpilibj.command.InstantCommand;
 import frc.robot.Robot;
+import frc.robot.subsystems.CanbusDistanceSensor;
 
 /**
  * Add your docs here.
@@ -18,18 +19,20 @@ public class ConfigureRange extends InstantCommand {
    * Add your docs here.
    */
   private int myRange;
+  private int myId;
 
-  public ConfigureRange(int range) {
+  public ConfigureRange(int id,int range) {
     super();
     // Use requires() here to declare subsystem dependencies
     // eg. requires(chassis);
     myRange = range;
+    myId= id;
   }
 
   // Called once when the command executes
   @Override
   protected void initialize() {
-    Robot.distanceSensorLoad.configureRange(myRange);
+    CanbusDistanceSensor.configureRange(myId, myRange);
   }
 
 }

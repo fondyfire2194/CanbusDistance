@@ -45,18 +45,20 @@ public class OI {
   // button.whenReleased(new ExampleCommand());
   public OI() {
     Timer.delay(.25);
-    SmartDashboard.putData("IdentifyDevice0", new IdentifyDevice(0));
+    SmartDashboard.putData("IdentifyDevice", new IdentifyDevice(Robot.distanceSensorLoad));
     Timer.delay(.25);
-    SmartDashboard.putData("IdentifyDevice23", new IdentifyDevice(23));
+    SmartDashboard.putData("ConfigureDevice0", new ConfigureDevice(23,0));
     Timer.delay(.25);
-    SmartDashboard.putData("ConfigureDevice0", new ConfigureDevice(0));
+    SmartDashboard.putData("ConfigureDevice23", new ConfigureDevice(0,23));
     Timer.delay(.25);
-    SmartDashboard.putData("ConfigureDevice23", new ConfigureDevice(23));
+    SmartDashboard.putData("ShortRange", new ConfigureRange(23,0));
     Timer.delay(.25);
-    SmartDashboard.putData("ShortRange", new ConfigureRange(0));
+    SmartDashboard.putData("MidRange", new ConfigureRange(23,1));
     Timer.delay(.25);
-    SmartDashboard.putData("MidRange", new ConfigureRange(1));
+    SmartDashboard.putData("LongRange", new ConfigureRange(23,2));
     Timer.delay(.25);
-    SmartDashboard.putData("LongRange", new ConfigureRange(2));
+    SmartDashboard.putData("ReadCalibration", new ReadCalibration(Robot.distanceSensorLoad));
+
+
   }
 }

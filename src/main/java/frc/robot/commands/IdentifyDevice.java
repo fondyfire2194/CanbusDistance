@@ -9,6 +9,7 @@ package frc.robot.commands;
 
 import edu.wpi.first.wpilibj.command.InstantCommand;
 import frc.robot.Robot;
+import frc.robot.subsystems.CanbusDistanceSensor;
 /**
  * Add your docs here.
  */
@@ -17,17 +18,20 @@ public class IdentifyDevice extends InstantCommand {
    * Add your docs here.
    */
   private int myDeviceNumber;
+  
+
   public IdentifyDevice(int deviceNumber) {
     super();
     // Use requires() here to declare subsystem dependencies
     // eg. requires(chassis);
-myDeviceNumber = deviceNumber;
+  
+     myDeviceNumber = deviceNumber;
   }
 
   // Called once when the command executes
   @Override
   protected void initialize() {
-    Robot.distanceSensorLoad.identifyDevice(myDeviceNumber);
+    CanbusDistanceSensor.identifyDevice(myDeviceNumber);
   }
 
 }

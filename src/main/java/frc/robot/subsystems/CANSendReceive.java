@@ -14,21 +14,24 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import edu.wpi.first.hal.can.CANExceptionFactory;
 import edu.wpi.first.hal.can.CANJNI;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 public class CANSendReceive {
 
-    public ByteBuffer targetID = ByteBuffer.allocateDirect(4);
-    private ByteBuffer timeStamp = ByteBuffer.allocateDirect(4);
-    public byte[] result;
-    public int status;
+    public static ByteBuffer targetID = ByteBuffer.allocateDirect(4);
+    private static ByteBuffer timeStamp = ByteBuffer.allocateDirect(4);
+    public static byte[] result;
+    public static int status;
 
     /** helper routine to get last received message for a given ID */
-    public long readMessage(int fullId, int deviceID) {
-        try {
-            CANExceptionFactory.checkStatus(status, fullId | deviceID);
-        } catch (Exception e) {
-            return -2;
-        }
+    public static long readMessage(int fullId, int deviceID) {
+        
+        // try {
+        //     CANExceptionFactory.checkStatus(status, fullId | deviceID);
+
+        // } catch (Exception e) {
+        //     return -2;
+        // }
         try {
             targetID.clear();
             targetID.order(ByteOrder.LITTLE_ENDIAN);
@@ -37,24 +40,36 @@ public class CANSendReceive {
             timeStamp.clear();
             timeStamp.order(ByteOrder.LITTLE_ENDIAN);
             timeStamp.asIntBuffer().put(0, 0x00000000);
-
+ 
             result = CANJNI.FRCNetCommCANSessionMuxReceiveMessage(targetID.asIntBuffer(), 0x1fffffff, timeStamp);
-
+ 
             long retval = timeStamp.getInt();
             retval &= 0xFFFFFFFF; /* undo sign-extension */
             return retval;
+ 
         } catch (Exception e) {
+ 
+            System.out.println(e);
             return -1;
         }
     }
 
-    public void sendMessage(int messageID, byte[] data, int dataSize, int period) {
+    public static void sendMessage(int messageID, byte[] data, int dataSize, int period) {
 
         CANJNI.FRCNetCommCANSessionMuxSendMessage(messageID, data, period);
         CANExceptionFactory.checkStatus(status, messageID);
 
         return;
 
+    }
+
+    public static double extractValue(byte[] src, int high, int low) {
+        double temp = src[high] * 256;
+        int i = 0;
+        for (i = high - 1; i > low; i--) {
+            temp = 256 * (temp + (double) src[i]);
+        }
+        return temp + src[i];
     }
 
 }
