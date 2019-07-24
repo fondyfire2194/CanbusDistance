@@ -158,8 +158,8 @@ public class Robot extends TimedRobot {
       SD.putN0("DistMM", dist);
       SD.putN2("DistFt", dist / 304.8);
       double temp[] = CanbusDistanceSensor.readQuality(distanceSensorLoad);
-      SD.putN("AmbLight", temp[0]);
-      SD.putN("StdDev", temp[1]);
+      SD.putN0("AmbLight", temp[0]);
+      SD.putN0("StdDev", temp[1]);
 
       b = 0;
 

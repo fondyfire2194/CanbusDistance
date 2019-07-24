@@ -14,6 +14,7 @@ import edu.wpi.first.wpilibj.livewindow.LiveWindow;
 import edu.wpi.first.wpilibj.smartdashboard.SendableBuilder;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.DriverStation;
+import java.nio.ByteBuffer;
 
 /**
  * 
@@ -46,8 +47,8 @@ public class CanbusDistanceSensor extends SendableBase implements Sendable {
 
   // Messages from device
   public static byte[] readHeartbeat(int id) {
-    byte[] hwdata = null;
-    ;
+    byte[] hwdata = {0,0,0,0,0,0,0,0};
+    
     long read = CANSendReceive.readMessage(HEARTBEAT_MESSAGE, id);
 
     if (read != -1)
@@ -108,9 +109,32 @@ public class CanbusDistanceSensor extends SendableBase implements Sendable {
 
   // // Messages to device
   public static void configureRange(int id, int mode) {
-    byte[] data = new byte[1];
+    byte[] data = new byte[3];
+    int interval = 100;
     data[0] = (byte) mode;
-    CANSendReceive.sendMessage(RANGING_CONFIGURATION_MESSAGE | id, data, 1, kSendMessagePeriod);
+
+switch (mode) {
+  case 0:
+  interval = 100;
+    break;
+    case 1://150ms in 2 byte format
+    interval =  150;
+    break;
+    case 2://200ms in 2 byte format
+    interval = 200;
+    break;
+  default:
+  interval = 100;
+    break;
+}
+ByteBuffer b = ByteBuffer.allocate(4);
+b.putInt(interval);
+byte[] result = b.array();
+data[1] = result[1];
+data[2] = result[2];
+
+
+    CANSendReceive.sendMessage(RANGING_CONFIGURATION_MESSAGE | id, data, 3, kSendMessagePeriod);
 
   }
 
@@ -129,7 +153,7 @@ public class CanbusDistanceSensor extends SendableBase implements Sendable {
     if (newID >= 0 && newID < 33) {
       hwdata = readHeartbeat(oldID);
       temp = getSensorInfo(hwdata);
-      SmartDashboard.putNumber("Cdat", temp[0]);
+      
       hwdata[0] = 0x0C;
       hwdata[6] = (byte) newID;
       CANSendReceive.sendMessage(DEVICE_CONFIGURATION_MESSAGE, hwdata, 7, kSendMessagePeriod);
