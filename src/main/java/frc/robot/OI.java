@@ -45,20 +45,25 @@ public class OI {
   // button.whenReleased(new ExampleCommand());
   public OI() {
     Timer.delay(.25);
-    SmartDashboard.putData("IdentifyDevice", new IdentifyDevice(Robot.distanceSensorLoad));
+    SmartDashboard.putData("IdDev0", new IdentifyDevice(0));
     Timer.delay(.25);
-    SmartDashboard.putData("ConfigureDevice0", new ConfigureDevice(23,0));
+
+    SmartDashboard.putData("ConfDev0", new ConfigureDevice(Robot.distanceSensorRocket,0));
     Timer.delay(.25);
-    SmartDashboard.putData("ConfigureDevice23", new ConfigureDevice(0,23));
+    SmartDashboard.putData("ConfDev23", new ConfigureDevice(0,Robot.distanceSensorRocket));
     Timer.delay(.25);
-    SmartDashboard.putData("ShortRange", new ConfigureRange(23,0));
+    SmartDashboard.putData("ShortRange", new ConfigureRange(Robot.distanceSensorLoad,0));
     Timer.delay(.25);
-    SmartDashboard.putData("MidRange", new ConfigureRange(23,1));
+    SmartDashboard.putData("MidRange", new ConfigureRange(Robot.distanceSensorLoad,1));
     Timer.delay(.25);
-    SmartDashboard.putData("LongRange", new ConfigureRange(23,2));
+    SmartDashboard.putData("LongRange", new ConfigureRange(Robot.distanceSensorLoad,2));
     Timer.delay(.25);
     SmartDashboard.putData("ReadCalibration", new ReadCalibration(Robot.distanceSensorLoad));
-
+     Timer.delay(.25);
+    SmartDashboard.putData("IdDev23", new IdentifyDevice(23));
+    SmartDashboard.putData("Find", new FindSensor(0));
+    Timer.delay(.25);
+   
 
   }
 }

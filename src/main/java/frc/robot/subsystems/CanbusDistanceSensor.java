@@ -34,10 +34,11 @@ public class CanbusDistanceSensor extends SendableBase implements Sendable {
   protected final static int LIVE_WINDOW_UPDATE_INTERVAL = 50;
 
   private static double lastDistance = 0;
-  // public static byte[] hwdata = new byte[8];
+  public static byte[] hwdata = new byte[8];
   private double serialNumber;
   private double partNumber;
   private double firmWare;
+  
 
   public CanbusDistanceSensor() {
 
@@ -47,13 +48,10 @@ public class CanbusDistanceSensor extends SendableBase implements Sendable {
 
   // Messages from device
   public static byte[] readHeartbeat(int id) {
-    byte[] hwdata = {0,0,0,0,0,0,0,0};
-    
-    long read = CANSendReceive.readMessage(HEARTBEAT_MESSAGE, id);
 
+    long read = CANSendReceive.readMessage(HEARTBEAT_MESSAGE, id);
     if (read != -1)
       hwdata = CANSendReceive.result;
-
     return hwdata;
   }
 
@@ -65,19 +63,26 @@ public class CanbusDistanceSensor extends SendableBase implements Sendable {
     return temp;
   }
 
+  public static int findSensor(int id) {
+    hwdata = readHeartbeat(id);
+    if (hwdata[4] != 0) {
+      return id;
+    } else {
+      return 999;
+    }
+  }
+
   public static double getDistanceMM(int id) {
     long read = CANSendReceive.readMessage(MEASURED_DISTANCE_MESSAGE, id);
 
-    if (read == -1)
-      return lastDistance;
-    else {
+    if (read == -1) {
+      return 0;
+    } else {
       int rangingStatus = Byte.toUnsignedInt(CANSendReceive.result[2]);
-      SmartDashboard.putNumber("RS", rangingStatus);
       if (rangingStatus != 0) {
         return (double) -rangingStatus;
       } else {
         lastDistance = extractValue(CANSendReceive.result, 1, 0);
-
         return lastDistance;
       }
     }
@@ -113,26 +118,25 @@ public class CanbusDistanceSensor extends SendableBase implements Sendable {
     int interval = 100;
     data[0] = (byte) mode;
 
-switch (mode) {
-  case 0:
-  interval = 100;
-    break;
-    case 1://150ms in 2 byte format
-    interval =  150;
-    break;
-    case 2://200ms in 2 byte format
-    interval = 200;
-    break;
-  default:
-  interval = 100;
-    break;
-}
-ByteBuffer b = ByteBuffer.allocate(4);
-b.putInt(interval);
-byte[] result = b.array();
-data[1] = result[1];
-data[2] = result[2];
-
+    switch (mode) {
+    case 0:
+      interval = 100;
+      break;
+    case 1:// 150ms in 2 byte format
+      interval = 150;
+      break;
+    case 2:// 200ms in 2 byte format
+      interval = 200;
+      break;
+    default:
+      interval = 100;
+      break;
+    }
+    ByteBuffer b = ByteBuffer.allocate(4);
+    b.putInt(interval);
+    byte[] result = b.array();
+    data[1] = result[1];
+    data[2] = result[2];
 
     CANSendReceive.sendMessage(RANGING_CONFIGURATION_MESSAGE | id, data, 3, kSendMessagePeriod);
 
@@ -153,7 +157,7 @@ data[2] = result[2];
     if (newID >= 0 && newID < 33) {
       hwdata = readHeartbeat(oldID);
       temp = getSensorInfo(hwdata);
-      
+
       hwdata[0] = 0x0C;
       hwdata[6] = (byte) newID;
       CANSendReceive.sendMessage(DEVICE_CONFIGURATION_MESSAGE, hwdata, 7, kSendMessagePeriod);
