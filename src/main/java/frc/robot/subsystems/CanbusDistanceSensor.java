@@ -7,14 +7,12 @@
 
 package frc.robot.subsystems;
 
-import frc.robot.subsystems.CANSendReceive;
+import java.nio.ByteBuffer;
+
 import edu.wpi.first.wpilibj.Sendable;
 import edu.wpi.first.wpilibj.SendableBase;
-import edu.wpi.first.wpilibj.livewindow.LiveWindow;
 import edu.wpi.first.wpilibj.smartdashboard.SendableBuilder;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-import edu.wpi.first.wpilibj.DriverStation;
-import java.nio.ByteBuffer;
 
 /**
  * 
@@ -38,7 +36,6 @@ public class CanbusDistanceSensor extends SendableBase implements Sendable {
   private double serialNumber;
   private double partNumber;
   private double firmWare;
-  
 
   public CanbusDistanceSensor() {
 
@@ -55,8 +52,10 @@ public class CanbusDistanceSensor extends SendableBase implements Sendable {
     return hwdata;
   }
 
-  public static double[] getSensorInfo(byte[] hwdata) {
-    double[] temp = new double[3];
+  public static int[] getSensorInfo(byte[] hwdata) {
+    int[] temp = new int[3];
+    // SmartDashboard.putNumber("D5", (int) hwdata[5]);
+    // SmartDashboard.putNumber("D4", (int) hwdata[4]);
     temp[0] = extractValue(hwdata, 3, 1);
     temp[1] = extractValue(hwdata, 5, 4);
     temp[2] = extractValue(hwdata, 7, 6);
@@ -72,25 +71,39 @@ public class CanbusDistanceSensor extends SendableBase implements Sendable {
     }
   }
 
-  public static double getDistanceMM(int id) {
+  public static int[] getDistanceMM(int id) {
+    int[] temp = { 0, 0 };
     long read = CANSendReceive.readMessage(MEASURED_DISTANCE_MESSAGE, id);
 
     if (read == -1) {
-      return 0;
+      return temp;
     } else {
       int rangingStatus = Byte.toUnsignedInt(CANSendReceive.result[2]);
       if (rangingStatus != 0) {
-        return (double) -rangingStatus;
+        temp[0] = -rangingStatus;
+        return temp;
       } else {
-        lastDistance = extractValue(CANSendReceive.result, 1, 0);
-        return lastDistance;
+        // SmartDashboard.putNumber("D1",Byte.toUnsignedInt(CANSendReceive.result[1]));
+        // SmartDashboard.putNumber("D0",Byte.toUnsignedInt(CANSendReceive.result[0]));
+
+        temp[0] = extractValue(CANSendReceive.result, 1, 0);
+        // temp[0 ]= CANSendReceive.result[1]<<8;
+        // temp[1]= Byte.toUnsignedInt(CANSendReceive.result[0]);
+        // temp[0]+=temp[1];
+        temp[1] = extractValue(CANSendReceive.result, 7, 4) / 65536;
+        return temp;
       }
     }
   }
 
-  public static double[] readQuality(int id) {
-    double temp[] = { 0, 0 };
+  public static int[] readQuality(int id) {
+    int temp[] = { 0, 0 };
     long read = CANSendReceive.readMessage(MEASUREMENT_QUALITY_MESSAGE, id);
+    // SmartDashboard.putNumber("Q3",(int)CANSendReceive.result[3]);
+    // SmartDashboard.putNumber("Q2",(int)CANSendReceive.result[2]);
+
+    // SmartDashboard.putNumber("Q1",(int)CANSendReceive.result[1]);
+    // SmartDashboard.putNumber("Q0",(int)CANSendReceive.result[0]);
     if (read != -1) {
       temp[0] = extractValue(CANSendReceive.result, 3, 0) / 65536;
       temp[1] = extractValue(CANSendReceive.result, 7, 4) / 65536;
@@ -98,8 +111,8 @@ public class CanbusDistanceSensor extends SendableBase implements Sendable {
     return temp;
   }
 
-  public static double[] readCalibrationState(int id) {
-    double temp[] = { 0, 0, 0, 0, 0, 0, 0 };
+  public static int[] readCalibrationState(int id) {
+    int temp[] = { 0, 0, 0, 0, 0, 0, 0 };
     long read = CANSendReceive.readMessage(CALIBRATION_STATE_MESSAGE, id);
 
     if (read != -1) {
@@ -153,24 +166,25 @@ public class CanbusDistanceSensor extends SendableBase implements Sendable {
 
   public static void configureDevice(int oldID, int newID) {
     byte[] hwdata = new byte[8];
-    double temp[] = new double[3];
     if (newID >= 0 && newID < 33) {
       hwdata = readHeartbeat(oldID);
-      temp = getSensorInfo(hwdata);
-
+      getSensorInfo(hwdata);
       hwdata[0] = 0x0C;
       hwdata[6] = (byte) newID;
       CANSendReceive.sendMessage(DEVICE_CONFIGURATION_MESSAGE, hwdata, 7, kSendMessagePeriod);
     }
   }
 
-  static double extractValue(byte[] src, int high, int low) {
-    double temp = src[high] * 256;
+  public static int extractValue(byte[] src, int high, int low) {
+    int temp = 0;
+    int temp1 = 0;
     int i = 0;
-    for (i = high - 1; i > low; i--) {
-      temp = 256 * (temp + (double) src[i]);
+    temp = (src[high]);
+    for (i = high - 1; i >= low; i--) {
+      temp1 = Byte.toUnsignedInt(src[i]);
+      temp = (temp * 256) + temp1;
     }
-    return temp + src[i];
+    return temp;
   }
 
   // https://www.chiefdelphi.com/t/creating-custom-smartdashboard-types-like-pidcommand/162737/8

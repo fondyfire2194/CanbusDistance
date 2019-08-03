@@ -16,9 +16,7 @@ public class FindSensor extends Command {
   private int foundId;
   private int currentId;
   private int highestId = 32;
-  private int countScan;
-  private byte[] hwdata;
-  private double[] temp;
+  private int[] temp;
 
   public FindSensor(int startId) {
     // Use requires() here to declare subsystem dependencies
@@ -30,7 +28,6 @@ public class FindSensor extends Command {
   @Override
   protected void initialize() {
     currentId = myStartId;
-    countScan = 0;
   }
 
   // Called repeatedly when this Command is scheduled to run
@@ -40,7 +37,7 @@ public class FindSensor extends Command {
     foundId = CanbusDistanceSensor.findSensor(currentId);
 
     if (foundId != 999) {
-     
+
       temp = CanbusDistanceSensor.getSensorInfo(CanbusDistanceSensor.hwdata);
       SmartDashboard.putNumber("FoundSerial", temp[0]);
       SmartDashboard.putNumber("SensorFound", currentId);

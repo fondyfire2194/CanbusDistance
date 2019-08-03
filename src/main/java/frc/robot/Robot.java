@@ -8,13 +8,10 @@
 package frc.robot;
 
 import edu.wpi.first.wpilibj.TimedRobot;
-import edu.wpi.first.wpilibj.I2C.Port;
-import edu.wpi.first.wpilibj.DigitalOutput;
-import edu.wpi.first.wpilibj.command.Scheduler;
 import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj.command.Scheduler;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.subsystems.CanbusDistanceSensor;
-import frc.robot.subsystems.CANSendReceive;
 
 /**
  * The VM is configured to automatically run this class, and to call the
@@ -51,14 +48,14 @@ public class Robot extends TimedRobot {
     m_oi = new OI();
 
     hwdataLoad = CanbusDistanceSensor.readHeartbeat(distanceSensorLoad);
-    double[] temp = CanbusDistanceSensor.getSensorInfo(hwdataLoad);
+    int[] temp = CanbusDistanceSensor.getSensorInfo(hwdataLoad);
     loadSensorSerial = temp[0];
     loadSensorPart = temp[1];
     loadSensorFirmware = temp[2];
     SmartDashboard.putNumber("LoadSerial", loadSensorSerial);
     SmartDashboard.putNumber("LoadPart", loadSensorPart);
     SmartDashboard.putNumber("LoadFirmware", loadSensorFirmware);
-    double temp1[] = CanbusDistanceSensor.readCalibrationState(distanceSensorLoad);
+    int temp1[] = CanbusDistanceSensor.readCalibrationState(distanceSensorLoad);
     SD.putN("X", temp1[0]);
     SD.putN("Y", temp1[1]);
     SD.putN("Offset", temp1[2]);
@@ -147,27 +144,31 @@ public class Robot extends TimedRobot {
     SmartDashboard.putNumber("TTT", Timer.getFPGATimestamp() - a);
     a = Timer.getFPGATimestamp();
     b++;
+    int[] temp = { 0, 0 };
     if (b >= 10) {
-      double dist = CanbusDistanceSensor.getDistanceMM(distanceSensorLoad);
-      if (dist < 0) {
-        SmartDashboard.putNumber("Read Error", dist);
-        dist = 0;
+
+      temp = CanbusDistanceSensor.getDistanceMM(distanceSensorLoad);
+      if (temp[0] < 0) {
+        SmartDashboard.putNumber("Read Error", temp[0]);
+        // temp[0] = 0;
       }
-      SD.putN0("DistMM", dist);
-      SD.putN2("DistFt", dist / 304.8);
-      double temp[] = CanbusDistanceSensor.readQuality(distanceSensorLoad);
+      SD.putN0("SigRate", temp[1]);
+
+      SD.putN0("DistMM", temp[0]);
+      SD.putN2("DistFt", temp[0] / 304.8);
+      temp = CanbusDistanceSensor.readQuality(distanceSensorLoad);
       SD.putN0("AmbLight", temp[0]);
       SD.putN0("StdDev", temp[1]);
-      double distR = CanbusDistanceSensor.getDistanceMM(distanceSensorRocket);
-      if (distR < 0) {
-        SmartDashboard.putNumber("Read Error", distR);
-        distR = 0;
-      }
-      SD.putN0("DistMM23", distR);
-      SD.putN2("DistFt23", distR / 304.8);
-      double tempR[] = CanbusDistanceSensor.readQuality(distanceSensorRocket);
-      SD.putN0("AmbLight23", tempR[0]);
-      SD.putN0("StdDev23", tempR[1]);
+      // double distR = CanbusDistanceSensor.getDistanceMM(distanceSensorRocket);
+      // if (distR < 0) {
+      // SmartDashboard.putNumber("Read Error", distR);
+      // distR = 0;
+      // }
+      // SD.putN0("DistMM23", distR);
+      // SD.putN2("DistFt23", distR / 304.8);
+      // double tempR[] = CanbusDistanceSensor.readQuality(distanceSensorRocket);
+      // SD.putN0("AmbLight23", tempR[0]);
+      // SD.putN0("StdDev23", tempR[1]);
 
       b = 0;
 
